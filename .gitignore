@@ -1,0 +1,23 @@
+# Entornos virtuales
+venv/
+.env/
+
+# Archivos compilados de Python
+__pycache__/
+*.py[cod]
+
+# Jupyter Notebooks checkpoints
+.ipynb_checkpoints/
+
+# Datos pesados CFD y ML (se gestionan aparte)
+data/
+simulations/*/processor*
+*.h5
+*.pt
+*.pth
+*.vtu
+*.vtk
+
+# OS y editores
+.DS_Store
+.vscode/
