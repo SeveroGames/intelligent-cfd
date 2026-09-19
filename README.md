@@ -77,12 +77,34 @@ intelligent-cfd/
 🚀 Uso del Dashboard Web (Live Demo)
 El modelo predictivo está publicado y accesible para cualquier navegador web. Puedes interactuar con el túnel de viento virtual aquí:
 
-🔗 [Inserta aquí tu enlace de Streamlit Cloud, ej: https://intelligent-cfd-naca0012.streamlit.app]
+https://intelligent-cfd-m8ht7kum4w3vzohygfnmro.streamlit.app/
 
 💻 Instalación y Ejecución Local
 Si deseas correr la Inteligencia Artificial y el Dashboard en tu máquina local:
 
-Clonar el repositorio:
+1. Clonar el repositorio:
 
-git clone [https://github.com/TU_USUARIO/intelligent-cfd.git](https://github.com/TU_USUARIO/intelligent-cfd.git)
+git clone https://github.com/SeveroGames/intelligent-cfd
 cd intelligent-cfd
+
+
+2. Crear y activar el entorno virtual:
+
+En Windows:
+
+python -m venv venv
+venv\Scripts\activate
+
+En Linux/Mac:
+
+python3 -m venv venv
+source venv/bin/activate
+
+
+3. Instalar dependencias:
+
+pip install -r requirements.txt
+
+Ejecutar la Interfaz Web:
+
+streamlit run ml/app.py
