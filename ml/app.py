@@ -47,6 +47,8 @@ area = 0.1
 
 # 4. Sidebar rediseñado con imagen de referencia
 with st.sidebar:
+    # Imagen añadida para referencia visual
+    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/NACA_0012.svg/1024px-NACA_0012.svg.png", width="stretch")
     st.header("🎛️ Panel de Control")
     st.markdown("Modifica las variables físicas:")
     
@@ -80,7 +82,7 @@ with col4:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# 7. Sweep completo para la Gráfica
+# 7. Sweep completo para la Gráfica y Cálculo del Ángulo Óptimo
 aoa_range = np.linspace(-15, 15, 100)
 X_sweep = np.column_stack((aoa_range, np.full_like(aoa_range, vel)))
 y_sweep = scaler_y.inverse_transform(model.predict(scaler_X.transform(X_sweep)))
@@ -88,7 +90,12 @@ y_sweep = scaler_y.inverse_transform(model.predict(scaler_X.transform(X_sweep)))
 lift_curve = 0.5 * rho * (vel**2) * area * y_sweep[:, 0]
 drag_curve = 0.5 * rho * (vel**2) * area * y_sweep[:, 1]
 
-# 8. Gráfico Interactivo de Alta Fidelidad (Plotly)
+# Identificar el punto de máxima eficiencia (Se necesita para los insights)
+efficiencies = y_sweep[:, 0] / y_sweep[:, 1]
+max_idx = np.argmax(efficiencies)
+opt_aoa = aoa_range[max_idx]
+
+# 8. Gráfico Interactivo de Alta Fidelidad (Plotly 2D)
 fig = go.Figure()
 
 # Curva Suave de Sustentación
@@ -112,8 +119,8 @@ fig.update_layout(
     title=dict(text=f"Espectro Físico a {vel} m/s", font=dict(size=20)),
     xaxis_title="Ángulo de Ataque (°)",
     yaxis_title="Fuerza Aerodinámica (Newtons)",
-    hovermode="x unified", # Muestra Lift y Drag juntos al pasar el ratón
-    plot_bgcolor='rgba(255,255,255,1)', # Fondo de la gráfica limpio
+    hovermode="x unified",
+    plot_bgcolor='rgba(255,255,255,1)',
     paper_bgcolor='rgba(0,0,0,0)',
     xaxis=dict(showgrid=True, gridcolor='#e5e7eb', zeroline=True, zerolinecolor='black'),
     yaxis=dict(showgrid=True, gridcolor='#e5e7eb', zeroline=True, zerolinecolor='black'),
@@ -121,4 +128,59 @@ fig.update_layout(
     margin=dict(l=40, r=40, t=60, b=40)
 )
 
-st.plotly_chart(fig, width="stretch")
+# ==========================================
+# 9. SISTEMA DE PESTAÑAS (TABS) Y GEMELO DIGITAL 3D
+# ==========================================
+tab1, tab2, tab3 = st.tabs(["📊 Análisis en Tiempo Real", "⚙️ Arquitectura del Sistema", "🌐 Gemelo Digital 3D"])
+
+with tab1:
+    # Gráfica 2D principal
+    st.plotly_chart(fig, width="stretch")
+    
+    # Insights Automáticos
+    if aoa > 12:
+        st.warning(f"⚠️ **Alerta Aerodinámica:** Estás entrando en la zona de pérdida (Stall). La sustentación comenzará a caer drásticamente.")
+    elif abs(aoa - opt_aoa) < 1.0:
+        st.success(f"✅ **Rendimiento Óptimo:** Te encuentras en el punto de máxima eficiencia de la aeronave.")
+    else:
+        st.info(f"💡 **Insight del Modelo:** Para esta velocidad ({vel} m/s), el ángulo de máxima eficiencia teórica (Mejor L/D) está cerca de los **{opt_aoa:.1f}°**.")
+
+with tab2:
+    st.markdown("""
+    ### Trazabilidad de la Arquitectura Híbrida
+    Este dashboard es el resultado final de un proceso de ingeniería multifase:
+    1. **Solver CFD Matemático:** Desarrollo nativo en C++ / Python.
+    2. **Entorno Aislado (Docker):** Generación de malla con Gmsh y simulación turbulenta usando `simpleFoam`.
+    3. **Dataset Sintético:** Extracción física paramétrica y escalable.
+    4. **Surrogate Modeling (IA):** Entrenamiento de Perceptrón Multicapa (MLP).
+    """)
+
+with tab3:
+    st.markdown("### Visualización Espacial (Gemelo Digital)")
+    st.markdown("El ala reacciona en tiempo real a la inclinación del viento controlada en el panel izquierdo.")
+    
+    # Crear malla 3D para el ala
+    x_3d = np.linspace(-1, 1, 15) # Cuerda del ala
+    y_3d = np.linspace(-3, 3, 15) # Envergadura (largo del ala)
+    X, Y = np.meshgrid(x_3d, y_3d)
+    
+    # Calcular la inclinación (Pitch) en el eje Z basándose en el Ángulo de Ataque
+    aoa_rad = np.radians(aoa)
+    Z = -X * np.tan(aoa_rad)
+    
+    # Generar Superficie 3D
+    fig3d = go.Figure(data=[go.Surface(z=Z, x=X, y=Y, colorscale='Blues', opacity=0.9)])
+    
+    fig3d.update_layout(
+        title=dict(text="Orientación Física del Perfil NACA 0012", font=dict(size=18)),
+        scene=dict(
+            xaxis_title="Cuerda (X)",
+            yaxis_title="Envergadura (Y)",
+            zaxis_title="Elevación (Z)",
+            zaxis=dict(range=[-2, 2]), # Rango estático para evitar que la cámara rebote
+            camera=dict(eye=dict(x=1.5, y=1.5, z=0.5))
+        ),
+        margin=dict(l=0, r=0, b=0, t=40),
+        height=500
+    )
+    st.plotly_chart(fig3d, width="stretch")
