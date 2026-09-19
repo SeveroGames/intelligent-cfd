@@ -48,7 +48,6 @@ area = 0.1
 # 4. Sidebar rediseñado con imagen de referencia
 with st.sidebar:
     # Imagen añadida para referencia visual
-    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/NACA_0012.svg/1024px-NACA_0012.svg.png", width="stretch")
     st.header("🎛️ Panel de Control")
     st.markdown("Modifica las variables físicas:")
     
@@ -135,7 +134,7 @@ tab1, tab2, tab3 = st.tabs(["📊 Análisis en Tiempo Real", "⚙️ Arquitectur
 
 with tab1:
     # Gráfica 2D principal
-    st.plotly_chart(fig, width="stretch")
+    st.plotly_chart(fig, use_container_width=True)
     
     # Insights Automáticos
     if aoa > 12:
@@ -183,4 +182,4 @@ with tab3:
         margin=dict(l=0, r=0, b=0, t=40),
         height=500
     )
-    st.plotly_chart(fig3d, width="stretch")
+    st.plotly_chart(fig3d, use_container_width=True)
