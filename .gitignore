@@ -21,3 +21,7 @@ simulations/*/processor*
 # OS y editores
 .DS_Store
 .vscode/
+
+# Streamlit agent skills (environment-specific symlinks)
+.agents\skills/developing-with-streamlit
+.claude\skills/developing-with-streamlit
