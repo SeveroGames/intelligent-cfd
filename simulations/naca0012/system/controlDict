@@ -1,0 +1,72 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  10
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
+}
+
+functions
+{
+    aerodynamicForces
+    {
+        type            forceCoeffs;
+        libs            ("libforces.so");
+        writeControl    timeStep;
+        writeInterval   1;
+
+        patches         ("airfoil"); // Nombre de nuestra frontera
+        rho             rhoInf;
+        log             true;
+        rhoInf          1.225;       // Densidad del aire estándar
+        CofR            (0.25 0 0);  // Centro aerodinámico (25% de la cuerda)
+        liftDir         (0 1 0);     // Sustentación en el eje Y
+        dragDir         (1 0 0);     // Arrastre en el eje X
+        pitchAxis       (0 0 1);     // Eje Z
+        magUInf         25.56;       // Velocidad por defecto del tutorial airFoil2D
+        lRef            1.0;         // Longitud de la cuerda (1 metro)
+        Aref            0.1;         // Área de referencia (Cuerda 1.0 * Extrusión 0.1)
+    }
+}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     simpleFoam;
+
+startFrom       startTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         500;
+
+deltaT          1;
+
+writeControl    timeStep;
+
+writeInterval   50;
+
+purgeWrite      0;
+
+writeFormat     ascii;
+
+writePrecision  6;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   6;
+
+runTimeModifiable true;
+
+
+// ************************************************************************* //
