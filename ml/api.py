@@ -1,19 +1,19 @@
 from fastapi import FastAPI, HTTPException, Security, Depends
 from fastapi.security.api_key import APIKeyHeader
 from pydantic import BaseModel
+from contextlib import asynccontextmanager
 import joblib
+import pandas as pd
 import numpy as np
 import os
 from dotenv import load_dotenv
 
-# 1. Cargar secretos de forma segura desde el archivo .env o el entorno
 load_dotenv()
 API_KEY = os.getenv("API_KEY")
 
 if not API_KEY:
-    print("⚠️ ADVERTENCIA: No se encontró API_KEY. Usando modo inseguro por defecto temporalmente.")
+    print("⚠️ ADVERTENCIA: No se encontró API_KEY. Usando modo inseguro temporal.")
 
-# Definir la cabecera HTTP requerida
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=True)
 
 async def get_api_key(api_key_header: str = Security(api_key_header)):
@@ -21,35 +21,40 @@ async def get_api_key(api_key_header: str = Security(api_key_header)):
         return api_key_header
     raise HTTPException(status_code=403, detail="Acceso denegado. Credenciales M2M inválidas.")
 
+# Diccionario global para guardar los modelos y evitar 'global model'
+ml_models = {}
+
+# 1. El nuevo estándar de FastAPI (Lifespan) que reemplaza al viejo @on_event
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Esto ocurre ANTES de encender el servidor
+    try:
+        ml_models["model"] = joblib.load('ml/saved_models/aero_model.pkl')
+        ml_models["scaler_X"] = joblib.load('ml/saved_models/scaler_X.pkl')
+        ml_models["scaler_y"] = joblib.load('ml/saved_models/scaler_y.pkl')
+        print("✅ Modelos de IA cargados exitosamente (Lifespan).")
+    except Exception as e:
+        print(f"❌ Error al cargar los modelos: {e}")
+        
+    yield # Aquí el servidor funciona y recibe peticiones
+    
+    # Esto ocurre DESPUÉS de apagar el servidor
+    ml_models.clear()
+
 app = FastAPI(
     title="Intelligent CFD API (Secure)",
     description="Motor predictivo de aerodinámica protegido con Autenticación M2M.",
-    version="1.1.0"
+    version="1.2.0",
+    lifespan=lifespan
 )
 
 class AeroRequest(BaseModel):
     angle_of_attack: float
     velocity: float
 
-model = None
-scaler_X = None
-scaler_y = None
-
-@app.on_event("startup")
-def load_ai_models():
-    global model, scaler_X, scaler_y
-    try:
-        model = joblib.load('ml/saved_models/aero_model.pkl')
-        scaler_X = joblib.load('ml/saved_models/scaler_X.pkl')
-        scaler_y = joblib.load('ml/saved_models/scaler_y.pkl')
-        print("✅ Modelos de IA cargados exitosamente.")
-    except Exception as e:
-        print(f"❌ Error al cargar los modelos: {e}")
-
-# 2. Proteger el Endpoint inyectando la dependencia de seguridad
 @app.post("/predict/")
 def predict_aerodynamics(request: AeroRequest, api_key: str = Depends(get_api_key)):
-    if model is None:
+    if "model" not in ml_models:
         raise HTTPException(status_code=500, detail="El modelo de IA no está disponible.")
     
     if not (-20.0 <= request.angle_of_attack <= 20.0):
@@ -57,10 +62,16 @@ def predict_aerodynamics(request: AeroRequest, api_key: str = Depends(get_api_ke
     if not (0.0 < request.velocity <= 100.0):
         raise HTTPException(status_code=400, detail="La velocidad debe estar entre 0 y 100 m/s.")
 
-    X_input = np.array([[request.angle_of_attack, request.velocity]])
-    X_scaled = scaler_X.transform(X_input)
-    y_pred_scaled = model.predict(X_scaled)
-    y_pred = scaler_y.inverse_transform(y_pred_scaled)
+    # 2. Solución para el Warning de Scikit-Learn: Usamos un DataFrame con los mismos nombres
+    # que se usaron durante el entrenamiento original.
+    X_input = pd.DataFrame(
+        [[request.angle_of_attack, request.velocity]], 
+        columns=['AoA_deg', 'Velocity_ms']
+    )
+    
+    X_scaled = ml_models["scaler_X"].transform(X_input)
+    y_pred_scaled = ml_models["model"].predict(X_scaled)
+    y_pred = ml_models["scaler_y"].inverse_transform(y_pred_scaled)
     
     cl, cd = y_pred[0]
     
