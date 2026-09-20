@@ -1,0 +1,31 @@
+name: Intelligent CFD - MLOps Pipeline
+
+# El pipeline se activa cada vez que haces un 'git push' a la rama principal
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-ai-engine:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 1. Clonar el repositorio
+      uses: actions/checkout@v3
+
+    - name: 2. Configurar el motor de Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: 3. Instalar librerías e IA
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest httpx
+
+    - name: 4. Ejecutar pruebas de físicas (Pytest)
+      run: |
+        pytest tests/ -v
