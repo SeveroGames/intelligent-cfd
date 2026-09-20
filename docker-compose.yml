@@ -1,0 +1,24 @@
+services:
+  # Microservicio 1: El Cerebro (Backend API)
+  api-engine:
+    build: .
+    container_name: cfd_ai_api
+    command: uvicorn ml.api:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    restart: unless-stopped
+
+  # Microservicio 2: La Interfaz Humana (Frontend Web)
+  web-dashboard:
+    build: .
+    container_name: cfd_ai_web
+    command: streamlit run ml/app.py --server.port 8501 --server.address 0.0.0.0
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    depends_on:
+      - api-engine
+    restart: unless-stopped
