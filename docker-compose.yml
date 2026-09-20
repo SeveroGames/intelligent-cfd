@@ -3,6 +3,8 @@ services:
   api-engine:
     build: .
     container_name: cfd_ai_api
+    env_file:
+      - .env
     command: uvicorn ml.api:app --host 0.0.0.0 --port 8000
     ports:
       - "8000:8000"
