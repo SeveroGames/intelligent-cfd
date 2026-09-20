@@ -1,54 +1,56 @@
-# 🚀 Intelligent CFD: Motor Predictivo Híbrido (OpenFOAM + Machine Learning)
+# 🚀 Intelligent CFD: Motor Predictivo Híbrido y Gemelo Digital 3D
 
-Este repositorio documenta el desarrollo de una arquitectura de ingeniería de software avanzada que fusiona la **Dinámica de Fluidos Computacional (CFD)** pura con **Inteligencia Artificial (Surrogate Modeling)**. El objetivo es predecir las fuerzas aerodinámicas (Sustentación y Arrastre) de un perfil alar en tiempo real, reduciendo el tiempo de cálculo de minutos en un clúster a milisegundos en un entorno web, manteniendo una precisión matemática de grado industrial.
+[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
+[![OpenFOAM](https://img.shields.io/badge/OpenFOAM-10-black.svg)](https://www.openfoam.com/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-Secure-00a393.svg)](https://fastapi.tiangolo.com/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED.svg)](https://www.docker.com/)
+[![CI/CD](https://img.shields.io/badge/GitHub_Actions-Passing-success.svg)]()
+
+Este repositorio documenta el desarrollo de una **arquitectura de ingeniería de software de grado aeroespacial** que fusiona la Dinámica de Fluidos Computacional (CFD) pura con Inteligencia Artificial (Surrogate Modeling). 
+
+El sistema es capaz de predecir las fuerzas aerodinámicas de un perfil alar en milisegundos, exponer los cálculos mediante una API segura (M2M), y renderizar la física en tiempo real en un **Gemelo Digital 3D** y un **Dashboard Web**.
 
 ---
 
-## 📖 Resumen del Proyecto
+## 📖 Arquitectura del Sistema
 
-Tradicionalmente, simular la física de fluidos requiere resolver iterativamente las ecuaciones de Navier-Stokes (un proceso computacionalmente muy costoso). Este proyecto resuelve este cuello de botella mediante una metodología de **Modelo Sustituto (Surrogate Model)**:
-1. Se utiliza **OpenFOAM** (vía Docker en Ubuntu) para calcular la física real y generar "Ground Truth" (datos reales).
-2. Se entrena una **Red Neuronal (MLP)** en Windows que "aprende" esta física subyacente.
-3. Se despliega un **Dashboard Interactivo en la Nube** que permite a cualquier ingeniero evaluar configuraciones de vuelo al instante.
+El proyecto resuelve el cuello de botella computacional de las ecuaciones de Navier-Stokes transformando horas de simulación en un ecosistema instantáneo y distribuido:
+1. **Física Base (Ground Truth):** Generada mediante OpenFOAM en un entorno Docker aislado (Ubuntu).
+2. **Cerebro (IA):** Red Neuronal (MLP) entrenada con Scikit-Learn que aproxima el campo físico bidimensional.
+3. **Microservicios (Backend/Frontend):** FastAPI y Streamlit orquestados en contenedores nativos para la nube.
+4. **Telemetría Interactiva:** Simulador 3D estilo radar (Ursina Engine) que reacciona físicamente a los cálculos de la IA a 60 FPS.
 
 ---
 
 ## 🏗️ Fases de Desarrollo y Metodología
 
-El proyecto se desarrolló en 10 fases iterativas, abarcando dos sistemas operativos (Ubuntu/Windows) para maximizar la eficiencia de las herramientas nativas:
+El ecosistema se construyó en **15 fases iterativas**, dominando un flujo *Cross-Platform* (Desarrollo en Windows $\rightarrow$ Despliegue en servidores Ubuntu Linux):
 
 ### Etapa 1: Fundamentos CFD y Entorno Aislado (Linux/Ubuntu)
-*   **Fases 0-4:** Programación desde cero de un solver 2D basado en Diferencias Finitas (FDM) para validar los fundamentos matemáticos de las ecuaciones de Navier-Stokes.
-*   **Fases 5-6 (Lid-Driven Cavity):** Configuración del entorno profesional. Uso de **Gmsh (v2.2)** para mallas estructuradas y **Docker** (`openfoam/openfoam10-paraview510`) para esquivar limitaciones de hardware y librerías, resolviendo flujo laminar con `icoFoam`.
-*   **Fase 7 (NACA 0012 Aerodinámica):** Transición a régimen turbulento y estado estacionario utilizando `simpleFoam`. Se construyó un "túnel de viento" virtual, aplicando condiciones de frontera complejas (symmetry, freestream) y extrayendo coeficientes aerodinámicos ($C_L$ y $C_D$) a través de funciones integradas (`forceCoeffs`/`aerodynamicForces`).
+* **Fases 0-4:** Solvers matemáticos 2D (Diferencias Finitas).
+* **Fases 5-7 (Cavity & NACA 0012):** Implementación industrial con **Gmsh** y **OpenFOAM** (esquemas `icoFoam` y `simpleFoam` turbulento). Extracción paramétrica de coeficientes $C_L$ y $C_D$.
 
 ### Etapa 2: Machine Learning y Modelado Sustituto (Windows)
-*   **Fase 8:** Generación de un dataset sintético físico masivo (2,000 muestras) basado en las leyes de aerodinámica validadas en CFD (incorporando variables de pérdida/stall). Entrenamiento de un **Perceptrón Multicapa (MLPRegressor)** utilizando Scikit-Learn.
-    *   *Innovación:* Se implementó una **Estandarización Bidireccional** (`StandardScaler` en entradas $X$ y salidas $y$) junto con funciones de activación `tanh` para resolver la disparidad de magnitudes entre el Lift y el Drag.
-    *   *Resultado:* Una precisión predictiva ($R^2$ Score) del **98.12%** con un MSE cercano a cero.
+* **Fases 8-10:** Generación de un dataset sintético físico. Entrenamiento de un Perceptrón Multicapa (`MLPRegressor`) con estandarización bidireccional y activación `tanh`.
+  * *Hito:* Precisión predictiva del **98.12%** y despliegue del modelo en la nube mediante **Streamlit**.
 
-### Etapa 3: Interfaz Gráfica y Despliegue Web (Cloud)
-*   **Fases 9-10:** Desarrollo de un Dashboard de grado industrial usando **Streamlit** y **Plotly**. El motor traduce los coeficientes adimensionales a fuerzas físicas reales (Newtons) basándose en la densidad del aire, velocidad de flujo y área, calculando dinámicamente la eficiencia ($L/D$) y mostrando el espectro de rendimiento en curvas interactivas.
+### Etapa 3: Microservicios y Gemelo Digital 3D (API y Simulación)
+* **Fases 11-12:** Creación de un backend **FastAPI** ultrarrápido que envuelve el modelo `.pkl`. Desarrollo de un simulador cliente (**Ursina Engine**) con cámara espacial, renderizado de malla aeronáutica y un HUD de telemetría que parpadea ante pérdidas de sustentación (Stall).
+
+### Etapa 4: MLOps, CI/CD y Seguridad Industrial (Cloud/DevOps)
+* **Fase 13 (Docker Compose):** Empaquetado de la IA y el frontend en contenedores escalables de Linux (`python:3.10-slim`).
+* **Fase 14 (GitHub Actions):** Pipeline de Integración Continua (CI/CD). Un robot ejecuta validaciones con `pytest` en cada actualización para asegurar que la IA nunca rompa las leyes de la física (ej. prohibir el arrastre negativo).
+* **Fase 15 (Zero Trust Security):** Autenticación de máquina a máquina (M2M) con `X-API-Key`. Inyección de variables de entorno ocultas (`.env`) para asegurar que el repositorio pueda ser público sin comprometer el servidor.
 
 ---
 
 ## 🛠️ Tecnologías y Stack
 
-**CFD & Simulación:**
-*   **OpenFOAM 10:** Framework principal de simulación de fluidos.
-*   **Gmsh:** Generación de mallas paramétricas (`.geo` a `.msh`).
-*   **Docker:** Contenerización del entorno CFD para ejecución agnóstica.
-*   **ParaView:** Visualización de campos vectoriales y presiones.
-
-**Machine Learning & Data Science:**
-*   **Python 3:** Lenguaje core.
-*   **Scikit-Learn:** Algoritmos de redes neuronales (MLP) y preprocesamiento numérico.
-*   **Pandas & NumPy:** Manipulación de tensores y datasets vectorizados.
-*   **Joblib:** Congelación y exportación de modelos entrenados (`.pkl`).
-
-**Desarrollo Web & UI:**
-*   **Streamlit:** Framework de renderizado web.
-*   **Plotly:** Gráficos matemáticos interactivos y reactivos.
+* **Física y Simulación:** OpenFOAM 10, Gmsh, ParaView.
+* **Inteligencia Artificial:** Scikit-Learn, Pandas, NumPy, Joblib.
+* **Desarrollo Web y API:** FastAPI, Uvicorn, Streamlit, Plotly.
+* **Gráficos 3D:** Ursina Engine (Motor de telemetría).
+* **MLOps y DevOps:** Docker, Docker Compose, GitHub Actions, Pytest, Python-Dotenv.
 
 ---
 
@@ -57,20 +59,22 @@ El proyecto se desarrolló en 10 fases iterativas, abarcando dos sistemas operat
 ```text
 intelligent-cfd/
 │
-├── analysis/                 # Scripts Python de extracción y ploteo de convergencia (CFD)
-├── data/                     # Datasets físicos generados (.csv)
-├── geometry/                 # Scripts de malla de Gmsh (.geo, .msh)
-├── ml/
-│   ├── saved_models/         # Modelos de Red Neuronal y Scalers exportados (.pkl)
-│   ├── app.py                # Dashboard web principal (Streamlit)
-│   ├── generate_dataset.py   # Script puente: Generador de física sintética
-│   ├── predictor.py          # Interfaz de IA por línea de comandos (CLI)
-│   └── train_model.py        # Arquitectura y entrenamiento de la IA
-├── simulations/              # Casos configurados de OpenFOAM (0/, constant/, system/)
-│   ├── cavity/               # Caso validación inicial (icoFoam)
-│   └── naca0012/             # Caso principal turbulento (simpleFoam)
-├── README.md                 # Documentación del proyecto
-└── requirements.txt          # Dependencias para despliegue en la nube
+├── .github/workflows/       # Pipelines de CI/CD (GitHub Actions)
+├── analysis/                # Convergencia y validación matemática
+├── geometry/                # Mallas paramétricas (.geo, .msh)
+├── ml/                      # Ecosistema de Inteligencia Artificial
+│   ├── saved_models/        # Modelos MLP y Scalers (.pkl)
+│   ├── api.py               # Servidor Backend Seguro (FastAPI)
+│   ├── app.py               # Dashboard Interactivo Web (Streamlit)
+│   ├── simulador_3d.py      # Telemetría de vuelo UAV en 3D
+│   └── train_model.py       # Algoritmo de entrenamiento
+├── simulations/             # Casos de OpenFOAM (cavity, naca0012)
+├── tests/                   # Pruebas automatizadas (Físicas y de Seguridad)
+├── Dockerfile               # Receta de empaquetado del clúster
+├── docker-compose.yml       # Orquestador de microservicios
+├── pytest.ini               # Configuración del entorno de testing
+├── requirements.txt         # Dependencias globales del servidor
+└── README.md                # Documentación
 
 
 
