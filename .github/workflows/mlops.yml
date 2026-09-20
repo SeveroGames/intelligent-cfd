@@ -31,4 +31,4 @@ jobs:
 
     - name: 4. Ejecutar pruebas de físicas y seguridad (Pytest)
       run: |
-        pytest tests/ -v
+        python -m pytest tests/ -v
